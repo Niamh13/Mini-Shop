@@ -19,3 +19,30 @@ router.get('/', (req, res) => {
 });
 
 module.exports = router;
+
+// shows XSS vulnerabilty - reviews are entered raw and displayed without sanitization 
+
+//product detail page
+router.get("/:id", (req, res) => {
+    const id = req.params.id;
+
+    db.get("SELECT * FROM products WHERE id = ?", [id], (err, product) => {
+        db.all(
+            "SELECT * FROM reiews WHERE product_id = " + id,(err2, reviews) => {
+                res.render("product_detail", { product, reviews } );
+            }
+        );
+    });
+});
+
+// enter reviews (XSS)
+router.post("/:id/reviews", (req, res) => {
+    const id = req.params.id;
+    const content = req.body.content; 
+
+    const sql = "INSERT INTO reviews (product_id, content) VALUES (" + id + ", '" + content + "')";
+
+    db.run(sql, () => {
+        res.redirect("/products/" + id);
+    });
+});

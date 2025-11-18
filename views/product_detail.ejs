@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.name %></title>
+</head>
+<body>
+    <h1><%= product.name %></h1>
+    <p>€<%= product.price %></p>
+
+    <h3>Reviews</h3>
+    <ul>
+        <% reviews.forEach(r => { %>
+        <li><%= r.content %></li>
+        <% }) %>
+    </ul>
+
+    <form method="POST" action="/prodducts/<%= product.id %>/review">
+        <textarea name="content"></textarea>
+        <button type="submit">Add Review</button>
+    </form>
+</body>
+</html>
