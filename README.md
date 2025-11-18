@@ -1,5 +1,4 @@
-# Mini-Shop
-# (Secure Applicant Programming Project)
+# Mini-Shop (Secure Applicant Programming Project)
 
 Mini-Shop purpose is to demostrate insecure coding practices, analyse their security impact, and implement secure remediation following industry standards such as the OWASP Top 10.
 
