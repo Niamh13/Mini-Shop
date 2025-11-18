@@ -58,9 +58,6 @@ This project uses GitHub branches to separate secure and insecure versions:
 - **`secure` branch**  
   Contains the fully remediated implementation following secure coding standards.
 
-- **`main` branch** *(optional)*  
-  Can be used for documentation only or left empty.
-
 ---
 
 # Installation & Setup
@@ -69,3 +66,13 @@ This project uses GitHub branches to separate secure and insecure versions:
 ```bash
 git clone https://github.com/USERNAME/mini-shop.git
 cd mini-shop
+
+ **2. Install Dependencies**
+npm install
+
+ **3. Initialise SQLite db**
+node db/init.js
+
+ **4. Run**
+node app.js
+http://localhost:3000
