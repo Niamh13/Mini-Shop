@@ -23,6 +23,11 @@ app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+app.use((req, res, next) => {
+    console.log("USER ACTION:", req.method, req.url, "Body:", req.body);
+    next();
+});
+
 // Routes
 app.get("/", (req, res) => {
     res.render("home");
@@ -36,3 +41,5 @@ app.use("/admin", require("./routes/admin"));
 app.listen(PORT, () => {
     console.log(`Mini-Shop running at http://localhost:${PORT}`);
 });
+
+app.use("/cart", require("./routes/cart"));
