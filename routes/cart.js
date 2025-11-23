@@ -9,7 +9,22 @@ router.get("/add/:id", (req, res) => {
 
     if (!req.session.cart) req.session.cart = [];
 
-    req.session.cart.push(productId); 
+    req.session.cart.push(productId);
+
+    res.redirect("/cart");
+});
+
+// Remove a single item from cart
+router.get("/remove/:id", (req, res) => {
+    const productId = req.params.id;
+
+    if (!req.session.cart) req.session.cart = [];
+
+    const index = req.session.cart.indexOf(productId);
+
+    if (index !== -1) {
+        req.session.cart.splice(index, 1);   // remove only ONE instance
+    }
 
     res.redirect("/cart");
 });
@@ -35,7 +50,15 @@ router.get("/", (req, res) => {
         res.send(`
             <h1>Your Cart</h1>
             <ul>
-                ${items.map(i => `<li>${i.name} — €${i.price}</li>`).join("")}
+                ${items
+                    .map(
+                        i => `
+                    <li>
+                        ${i.name} — €${i.price}
+                        <a href="/cart/remove/${i.id}" style="color:red;">[Remove]</a>
+                    </li>`
+                    )
+                    .join("")}
             </ul>
 
             <h3>Total: €${total.toFixed(2)}</h3>
@@ -62,15 +85,13 @@ router.post("/pay", (req, res) => {
         return res.send("<p>Your cart is empty!</p>");
     }
 
-    // Store order insecurely for the admin panel
     db.run(
         "INSERT INTO orders (card_number) VALUES (?)",
         [fakeCard],
         function (err) {
             if (err) return res.send("Error creating order.");
 
-            // Clear cart
-            req.session.cart = [];
+            req.session.cart = []; // clear cart
 
             res.send(`
                 <h1>Order Successful</h1>
