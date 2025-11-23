@@ -6,7 +6,8 @@ db.serialize(() => {
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
-            price REAL
+            price REAL,
+            stock INTEGER DEFAULT 10
         )
     `);
 
@@ -24,7 +25,17 @@ db.serialize(() => {
             card_number TEXT
         )
     `);
+
+    // fake products
+    db.run(`INSERT INTO products (name, price) VALUES ('Red Double Knit Yarn', 8.99)`);
+    db.run(`INSERT INTO products (name, price) VALUES ('Blue Double Knit Yarn', 9.99)`);
+    db.run(`INSERT INTO products (name, price) VALUES ('Black Double Knit Yarn', 9.49)`);
+
+    // fake orders
+    db.run(`INSERT INTO orders (card_number) VALUES ('4242 4242 4242 4242')`);
+    db.run(`INSERT INTO orders (card_number) VALUES ('5555 5555 5555 4444')`);
+    db.run(`INSERT INTO orders (card_number) VALUES ('3714 496353 98431')`);
 });
 
-console.log("Database initialized.");
+console.log("Database initialized with sample data.");
 db.close();

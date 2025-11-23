@@ -16,10 +16,14 @@
     <ul>
         <% products.forEach(p => { %>
         <li>
-            <%= p.name %> - $<%= p.price %>
+            <%= p.name %> — €<%= p.price %> — Stock: <%= p.stock %>
+            <a href="/cart/add/<%= p.id %>">Add to cart</a>
             <a href="/products/<%= p.id %>">View</a>"
         </li>
     <% }) %>
     </ul>
+    <br>
+    <hr>
+    <a href="/" class="btn btn-secondary">← Back to Home</a>
 </body>
 </html>
