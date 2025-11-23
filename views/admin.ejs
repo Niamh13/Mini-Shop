@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin</title>
+</head>
+<body>
+    <h1>Admin Panel</h1>
+
+    <!-- Sensitive Data Exposure -->
+    <h2>Orders</h2>
+
+    <table border="1">
+        <tr><th>ID</th><th>Card Number</th></tr>
+
+        <% orders.forEach(o => { %>
+        <tr> 
+            <td><% o.id %></td>
+            <td><% o.card_number %></td>
+        </tr>
+        <% }) %>
+    </table>
+</body>
+</html>
