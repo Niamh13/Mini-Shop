@@ -43,7 +43,7 @@ app.get("/", (req, res) => {
         <ul>
             <li><a href="/products">View Products</a></li>
             <li><a href="/cart">Your Cart</a></li>
-            <li><a href="/admin">Admin Panel (Insecure)</a></li>
+            <li><a href="/admin">Admin Panel</a></li>
         </ul>
     `);
 });

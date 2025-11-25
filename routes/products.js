@@ -32,7 +32,7 @@ router.get("/:id", (req, res) => {
     });
 });
 
-// Add a review (stored XSS vulnerability intended)
+// Add a review (stored XSS vulnerability)
 router.post("/:id/review", (req, res) => {
     const productId = req.params.id;
     const content = req.body.content; // no sanitization for demo

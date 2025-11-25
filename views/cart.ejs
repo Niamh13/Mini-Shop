@@ -14,7 +14,7 @@
         // Dom-Based XSS
         const parms = new URLSearchParams(window.location.search);
 
-        document.getElementById("cart").innerHTML = "Item: " + params.get("item");
+        document.getElementById("cart").innerHTML = "Item: " + parms.get("item");
 
         
     </script>

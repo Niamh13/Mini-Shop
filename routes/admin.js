@@ -8,7 +8,7 @@ router.get("/", (req, res) => {
     db.all("SELECT * FROM products", (err, products) => {
         db.all("SELECT * FROM orders", (err2, orders) => {
             res.send(`
-                <h1>Admin Panel (Insecure)</h1>
+                <h1>Admin Panel</h1>
 
                 <a href="/">Back to Home</a>
                 <hr>
@@ -37,7 +37,7 @@ router.get("/", (req, res) => {
                     ).join("")}
                 </ul>
 
-                <h2>Orders (Sensitive Data Exposure!)</h2>
+                <h2>Orders</h2>
                 <ul>
                     ${orders.map(o =>
                         `<li>Order #${o.id} — Card: ${o.card_number}</li>`
