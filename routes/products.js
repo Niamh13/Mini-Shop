@@ -2,19 +2,19 @@ const express = require("express");
 const router = express.Router();
 const sqlite3 = require("sqlite3").verbose();
 const db = new sqlite3.Database("./db/database.sqlite");
+const sanitizeHtml = require("sanitize-html");
 
-// List products with optional search (SQLi vulnerability intended)
+// List products with safe parameterized LIKE query
 router.get("/", (req, res) => {
     const search = req.query.search || "";
-    const sql = "SELECT * FROM products WHERE name LIKE '%" + search + "%'";
-    db.all(sql, [], (err, products) => {
+    const sql = "SELECT * FROM products WHERE name LIKE ?";
+    db.all(sql, [`%${search}%`], (err, products) => {
         if (err) return res.send("Database error");
         res.render("products", { products, encodeURIComponent, search });
-
     });
 });
 
-// Product detail page with reviews
+// Product detail page with reviews (sanitized)
 router.get("/:id", (req, res) => {
     const productId = req.params.id;
     db.get("SELECT * FROM products WHERE id = ?", [productId], (err, product) => {
@@ -32,10 +32,16 @@ router.get("/:id", (req, res) => {
     });
 });
 
-// Add a review (stored XSS vulnerability intended)
+// Add a review (sanitize input, use CSRF protection)
 router.post("/:id/review", (req, res) => {
     const productId = req.params.id;
-    const content = req.body.content; // no sanitization for demo
+    // Sanitize user input to prevent stored XSS
+    const contentRaw = req.body.content || "";
+    const content = sanitizeHtml(contentRaw, {
+        allowedTags: [], // strip all tags
+        allowedAttributes: {}
+    });
+
     db.run(
         "INSERT INTO reviews (product_id, content) VALUES (?, ?)",
         [productId, content],

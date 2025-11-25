@@ -12,9 +12,9 @@
 
     <script>
         // Dom-Based XSS
-        const parms = new URLSearchParams(window.location.search);
+        const item = new URLSearchParams(window.location.search).get('item') || "none";
+        document.getElementById("cart").textContent = "Added item: " + item;
 
-        document.getElementById("cart").innerHTML = "Item: " + params.get("item");
 
         
     </script>

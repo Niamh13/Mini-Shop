@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
     <title><%= product.name %></title>
 </head>
 <body>
@@ -10,20 +9,20 @@
     <p>Price: €<%= product.price %></p>
     <p>Stock: <%= product.stock %></p>
 
-    <a href="/cart/add/<%= product.id %>">Add to Cart</a>
-    <br><br>
-    <a href="/products">Back to Products</a>
-    <a href="/">Home</a>
+    <a href="/cart/add/<%= product.id %>">Add to Cart</a><br><br>
+
+    <a href="/products">Back to Products</a> | <a href="/">Home</a>
 
     <h3>Reviews</h3>
     <ul>
         <% reviews.forEach(r => { %>
-            <li><%= r.content %></li>
+            <li><%= r.content %></li> <!-- safe escaped output -->
         <% }) %>
     </ul>
 
     <form method="POST" action="/products/<%= product.id %>/review">
-        <textarea name="content"></textarea>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <textarea name="content" required></textarea><br>
         <button type="submit">Add Review</button>
     </form>
 </body>

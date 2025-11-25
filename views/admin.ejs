@@ -1,25 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin</title>
+    <meta charset="UTF-8" />
+    <title>Admin Panel</title>
 </head>
 <body>
     <h1>Admin Panel</h1>
+    <p>Welcome, <%= adminUsername %>! <a href="/admin/logout">Logout</a></p>
 
-    <!-- Sensitive Data Exposure -->
+    <h2>Add New Product</h2>
+
+    <form method="POST" action="/admin/products/new">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Name:</label><br>
+        <input type="text" name="name" required><br>
+
+        <label>Price (€):</label><br>
+        <input type="number" name="price" step="0.01" required><br>
+
+        <label>Stock:</label><br>
+        <input type="number" name="stock" required><br><br>
+
+        <button type="submit">Add Product</button>
+    </form>
+
+    <hr>
+
+    <h2>Existing Products</h2>
+    <ul>
+        <% products.forEach(p => { %>
+        <li>
+            <form method="POST" action="/admin/products/<%= p.id %>/update" style="display:inline-block;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                Name:
+                <input type="text" name="name" value="<%= p.name %>" required>
+
+                Price:
+                <input type="number" name="price" step="0.01" value="<%= p.price %>" required>
+
+                Stock:
+                <input type="number" name="stock" value="<%= p.stock %>" required>
+
+                <button type="submit">Update</button>
+            </form>
+
+            <form method="POST" action="/admin/products/<%= p.id %>/delete"
+                  style="display:inline-block; margin-left:10px;"
+                  onsubmit="return confirm('Delete this product?');">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" style="color:red;">Delete</button>
+            </form>
+        </li>
+        <% }); %>
+    </ul>
+
+    <hr>
+
     <h2>Orders</h2>
-
     <table border="1">
-        <tr><th>ID</th><th>Card Number</th></tr>
-
+        <tr><th>ID</th><th>Card</th><th>Total</th></tr>
         <% orders.forEach(o => { %>
-        <tr> 
-            <td><% o.id %></td>
-            <td><% o.card_number %></td>
+        <tr>
+            <td><%= o.id %></td>
+            <td><%= o.card_number %></td>
+            <td>€<%= o.total %></td>
         </tr>
         <% }) %>
     </table>
+
+    <hr>
+
+    <h2>Recent Logs</h2>
+    <ul>
+        <% logs.forEach(l => { %>
+            <li>[<%= l.created_at %>] <%= l.message %></li>
+        <% }) %>
+    </ul>
+
+    <a href="/">Back to Home</a>
 </body>
 </html>

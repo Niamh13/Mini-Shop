@@ -1,81 +1,163 @@
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
 const router = express.Router();
+const sqlite3 = require("sqlite3").verbose();
+const bcrypt = require("bcrypt");
 const db = new sqlite3.Database("./db/database.sqlite");
 
-// Admin home — list products + orders
-router.get("/", (req, res) => {
-    db.all("SELECT * FROM products", (err, products) => {
-        db.all("SELECT * FROM orders", (err2, orders) => {
-            res.send(`
-                <h1>Admin Panel (Insecure)</h1>
+// ------------------------------
+// Middleware: Require Admin Login
+// ------------------------------
+function requireAdmin(req, res, next) {
+    if (req.session && req.session.isAdmin) {
+        next();
+    } else {
+        res.status(403).send("Access denied. Admins only.");
+    }
+}
 
-                <a href="/">Back to Home</a>
-                <hr>
+// ------------------------------
+// Helper: Log Admin Actions
+// ------------------------------
+function logAdminAction(message) {
+    db.run("INSERT INTO logs (message) VALUES (?)", [message], (err) => {
+        if (err) console.error("Logging failed:", err);
+    });
+}
 
-                <h2>Add New Product</h2>
-                <form method="POST" action="/admin/add">
-                    <input name="name" placeholder="Product name">
-                    <input name="price" placeholder="Price">
-                    <input name="stock" placeholder="Stock">
-                    <button type="submit">Add Product</button>
-                </form>
+// ------------------------------
+// Admin Login Pages
+// ------------------------------
+router.get("/login", (req, res) => {
+    res.render("admin_login", { error: null, csrfToken: req.csrfToken() });
+});
 
-                <h2>Products</h2>
-                <ul>
-                    ${products.map(p =>
-                        `<li>
-                            ${p.name} — €${p.price} — Stock: ${p.stock}
-                            <form method="POST" action="/admin/stock/${p.id}" style="display:inline;">
-                                <input name="stock" placeholder="New stock">
-                                <button type="submit">Update Stock</button>
-                            </form>
-                            <form method="POST" action="/admin/delete/${p.id}" style="display:inline;">
-                                <button type="submit">Delete</button>
-                            </form>
-                        </li>`
-                    ).join("")}
-                </ul>
+router.post("/login", (req, res) => {
+    const { username, password } = req.body;
 
-                <h2>Orders (Sensitive Data Exposure!)</h2>
-                <ul>
-                    ${orders.map(o =>
-                        `<li>Order #${o.id} — Card: ${o.card_number}</li>`
-                    ).join("")}
-                </ul>
-            `);
+    db.get("SELECT * FROM admins WHERE username = ?", [username], (err, adminUser) => {
+        if (err) return res.status(500).send("Database error");
+
+        if (!adminUser) {
+            return res.render("admin_login", {
+                error: "Invalid username or password",
+                csrfToken: req.csrfToken()
+            });
+        }
+
+        bcrypt.compare(password, adminUser.password_hash, (err, match) => {
+            if (err) return res.status(500).send("Server error");
+
+            if (!match) {
+                return res.render("admin_login", {
+                    error: "Invalid username or password",
+                    csrfToken: req.csrfToken()
+                });
+            }
+
+            req.session.isAdmin = true;
+            req.session.adminUsername = username;
+
+            logAdminAction(`${username} logged into the admin panel.`);
+
+            res.redirect("/admin");
         });
     });
 });
 
-// Add product
-router.post("/add", (req, res) => {
+// ------------------------------
+// Admin Logout
+// ------------------------------
+router.get("/logout", (req, res) => {
+    req.session.destroy(() => {
+        res.redirect("/");
+    });
+});
+
+// ------------------------------
+// MAIN ADMIN PANEL
+// ------------------------------
+router.get("/", requireAdmin, (req, res) => {
+    db.all("SELECT * FROM products", (err, products) => {
+        if (err) return res.send("Database error");
+
+        db.all("SELECT * FROM orders", (err2, orders) => {
+            if (err2) return res.send("Database error");
+
+            // Mask card numbers
+            orders.forEach(o => {
+                if (o.card_number?.length >= 4) {
+                    o.card_number = "**** **** **** " + o.card_number.slice(-4);
+                }
+            });
+
+            db.all("SELECT * FROM logs ORDER BY created_at DESC LIMIT 20", (err3, logs) => {
+                if (err3) logs = [];
+
+                res.render("admin", {
+                    products,
+                    orders,
+                    logs,
+                    csrfToken: req.csrfToken(),
+                    adminUsername: req.session.adminUsername
+                });
+            });
+        });
+    });
+});
+
+// ------------------------------
+// ADD NEW PRODUCT
+// ------------------------------
+router.post("/products/new", requireAdmin, (req, res) => {
     const { name, price, stock } = req.body;
 
     db.run(
         "INSERT INTO products (name, price, stock) VALUES (?, ?, ?)",
         [name, price, stock],
-        () => res.redirect("/admin")
+        function (err) {
+            if (err) return res.send("Database error");
+
+            logAdminAction(`${req.session.adminUsername} added product '${name}'.`);
+
+            res.redirect("/admin");
+        }
     );
 });
 
-// Update stock
-router.post("/stock/:id", (req, res) => {
+// ------------------------------
+// UPDATE PRODUCT
+// ------------------------------
+router.post("/products/:id/update", requireAdmin, (req, res) => {
     const id = req.params.id;
-    const stock = req.body.stock;
+    const { name, price, stock } = req.body;
 
-    db.run("UPDATE products SET stock = ? WHERE id = ?", [stock, id], () => {
+    db.run(
+        "UPDATE products SET name = ?, price = ?, stock = ? WHERE id = ?",
+        [name, price, stock, id],
+        function (err) {
+            if (err) return res.send("Database error");
+
+            logAdminAction(`${req.session.adminUsername} updated product #${id}.`);
+
+            res.redirect("/admin");
+        }
+    );
+});
+
+// ------------------------------
+// DELETE PRODUCT
+// ------------------------------
+router.post("/products/:id/delete", requireAdmin, (req, res) => {
+    const id = req.params.id;
+
+    db.run("DELETE FROM products WHERE id = ?", [id], (err) => {
+        if (err) return res.send("Database error");
+
+        logAdminAction(`${req.session.adminUsername} deleted product #${id}.`);
+
         res.redirect("/admin");
     });
 });
 
-// Delete product
-router.post("/delete/:id", (req, res) => {
-    const id = req.params.id;
-
-    db.run("DELETE FROM products WHERE id = ?", [id], () => {
-        res.redirect("/admin");
-    });
-});
-
+// ------------------------------
 module.exports = router;

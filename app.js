@@ -1,54 +1,92 @@
+require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const path = require("path");
-const app = express();
-const PORT = 3000;
+const helmet = require("helmet");
+const csurf = require("csurf");
 
-// Middleware
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Security middlewares
+app.use(helmet());
+
+// Body parsers & cookies
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(cookieParser());
+
+// Session config - for demo keep secure:false on localhost; set secure:true in HTTPS
 app.use(session({
-    secret: "insecure-secret",
-    resave: false,
-    saveUninitialized: true
+  secret: process.env.SESSION_SECRET || "change_this_in_production",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: false,       // set true if using HTTPS
+    sameSite: 'lax'      // helps mitigate CSRF
+  }
 }));
+
+// CSRF protection - exclude /admin/login POST so we can handle login form safely
+const csrfProtection = csurf();
+
+app.use((req, res, next) => {
+  // Exclude POST /admin/login from CSRF protection to avoid token errors while submitting login form
+  if (req.path === "/admin/login" && req.method === "POST") {
+    next();
+  } else {
+    csrfProtection(req, res, next);
+  }
+});
 
 // Static files
 app.use(express.static("public"));
 
-// Set EJS view engine
+// View engine
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// Poor Logging
+// Minimal, safe logging middleware (no request body logging)
 app.use((req, res, next) => {
-    console.log("USER ACTION:", req.method, req.url, "Body:", req.body);
-    next();
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
 });
 
-// Mount Routes (Only once each)
+// Helper: escaping function (available in templates)
+app.locals.escapeHTML = (str) => {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, (m) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[m]));
+};
+
+// Make CSRF token available to all views (except excluded routes)
+app.use((req, res, next) => {
+  if (req.path === "/admin/login" && req.method === "POST") {
+    // no CSRF token here
+    return next();
+  }
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
+// Mount routes
 app.use("/products", require("./routes/products"));
 app.use("/admin", require("./routes/admin"));
 app.use("/cart", require("./routes/cart"));
 
-// Home route inline (OK)
+// Home page route rendering views/home.ejs
 app.get("/", (req, res) => {
-    res.send(`
-        <h1>Welcome to Mini-Shop</h1>
-        <p>This is the insecure version of the project for demonstrating vulnerabilities.</p>
-
-        <h2>Navigation</h2>
-        <ul>
-            <li><a href="/products">View Products</a></li>
-            <li><a href="/cart">Your Cart</a></li>
-            <li><a href="/admin">Admin Panel (Insecure)</a></li>
-        </ul>
-    `);
+  res.render("home");
 });
 
-// Start Server
 app.listen(PORT, () => {
-    console.log(`Mini-Shop running at http://localhost:${PORT}`);
+  console.log(`Mini-Shop (secure) running at http://localhost:${PORT}`);
 });
