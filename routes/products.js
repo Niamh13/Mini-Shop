@@ -9,7 +9,8 @@ router.get("/", (req, res) => {
     const sql = "SELECT * FROM products WHERE name LIKE '%" + search + "%'";
     db.all(sql, [], (err, products) => {
         if (err) return res.send("Database error");
-        res.render("products", { products, encodeURIComponent, search });
+        const noProducts = products.length === 0;
+        res.render("products", { products, encodeURIComponent, search, noProducts });
 
     });
 });

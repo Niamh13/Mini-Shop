@@ -13,6 +13,12 @@
         <button type="submit">Search</button>
     </form>
 
+    <!-- Check if no products found -->
+    <% if (noProducts) { %>
+        <p>No products found.</p>
+    <% } else { %>
+
+    <!-- List products -->
     <ul>
         <% products.forEach(p => { %>
         <li>
@@ -22,6 +28,7 @@
         </li>
     <% }) %>
     </ul>
+    <% } %>
     <br>
     <hr>
     <a href="/" class="btn btn-secondary">← Back to Home</a>
