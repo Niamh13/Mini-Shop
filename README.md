@@ -10,29 +10,36 @@ The application is minimal to focus on security control rather than design or fu
 
 # **Core Functionality**
 - Product listing  
-- Add-to-cart flow  
-- Admin area for viewing orders and managing products  
+- Add-to-cart flow
+- Fake checkout
+- Admin panel
+- Product management (add/update/delete)
+- Order records with masked card numbers
+- System activity loggin
 - Simple user review system  
 
 # **Insecure Version Includes (Intentionally Introduced)**
 - SQL Injection  
 - Cross-Site Scripting: Reflected, Stored, and DOM-based  
-- Sensitive Data Exposure  
-- Weak session handling  
-- No security headers  
-- No CSRF protection  
-- Naive logging exposing sensitive info  
+- Weak/no authentication
+- Sensitive Data Exposure
+- Unvalidated inputs
+- Poor logging (credentials, cards numbers, etc.)
+- No CSRF protection
+- Missing security headers  
 
 # **Secure Version Fixes**
 - Parameterised SQL queries  
 - Input validation & output encoding  
 - DOM sanitisation  
-- Encryption & masking of sensitive data  
-- Proper session management  
-- CSRF tokens for unsafe actions  
-- Security headers (CSP, XSS-Protection, etc.)  
-- Safe logging & monitoring  
-- Improved authentication & access control  
+- Password Hashing (bcrypt)
+- Secure session management
+- CSRF protection
+- Helmet security headers
+- Card number masking
+- Safe, minimal logging
+- Admin authentication
+- Proper access control on admin routes 
 
 ---
 
@@ -42,7 +49,10 @@ The application is minimal to focus on security control rather than design or fu
 - **Express.js**  
 - **SQLite3**  
 - **EJS templating engine**  
-- **JavaScript (Frontend & Backend)**  
+- **JavaScript (Frontend & Backend)**
+- **bcrypt (password hashing)**
+- **Helmet (security headers)**
+- **CSURF (CSURF protection)**
 
 ---
 
@@ -69,9 +79,21 @@ cd mini-shop
  **2. Install Dependencies**
 npm install
 
+# For Secure version
+npm install csurf
+npm install helmet
+npm install sanitize-html
+npm install bcrypt
+
  **3. Initialise SQLite db**
 node db/init.js
+node db/logs.js
 
  **4. Run**
 node app.js
 http://localhost:3000
+
+**Admin Login**
+Default set as
+Username: admin
+Password: admin123
