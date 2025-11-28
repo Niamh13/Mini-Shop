@@ -24,9 +24,7 @@ function logAdminAction(message) {
     });
 }
 
-// ------------------------------
 // Admin Login Pages
-// ------------------------------
 router.get("/login", (req, res) => {
     res.render("admin_login", { error: null, csrfToken: req.csrfToken() });
 });
@@ -64,18 +62,15 @@ router.post("/login", (req, res) => {
     });
 });
 
-// ------------------------------
 // Admin Logout
-// ------------------------------
 router.get("/logout", (req, res) => {
     req.session.destroy(() => {
         res.redirect("/");
     });
 });
 
-// ------------------------------
-// MAIN ADMIN PANEL
-// ------------------------------
+
+// Main admin panel
 router.get("/", requireAdmin, (req, res) => {
     db.all("SELECT * FROM products", (err, products) => {
         if (err) return res.send("Database error");
@@ -93,12 +88,15 @@ router.get("/", requireAdmin, (req, res) => {
             db.all("SELECT * FROM logs ORDER BY created_at DESC LIMIT 20", (err3, logs) => {
                 if (err3) logs = [];
 
+                const noLogs = logs.length === 0;
+
                 res.render("admin", {
                     products,
                     orders,
                     logs,
                     csrfToken: req.csrfToken(),
-                    adminUsername: req.session.adminUsername
+                    adminUsername: req.session.adminUsername,
+                    noLogs
                 });
             });
         });

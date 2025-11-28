@@ -72,11 +72,19 @@
     <hr>
 
     <h2>Recent Logs</h2>
+
+    <!-- No logs -->
+    <% if (noLogs) { %>
+        <p>No logs found.</p>
+    <% } else { %>
+
+    <!--Log list-->
     <ul>
         <% logs.forEach(l => { %>
             <li>[<%= l.created_at %>] <%= l.message %></li>
         <% }) %>
     </ul>
+    <% } %>
 
     <a href="/">Back to Home</a>
 </body>
