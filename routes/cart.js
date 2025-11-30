@@ -3,20 +3,35 @@ const sqlite3 = require("sqlite3").verbose();
 const router = express.Router();
 const db = new sqlite3.Database("./db/database.sqlite");
 
-// Add item to cart
-router.get("/add/:id", (req, res) => {
-    const productId = req.params.id;
+// Secure HTML escape
+function escapeHtml(text) {
+    return text.replace(/[&<>"']/g, m => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    }[m]));
+}
+
+// Add item to cart (POST ONLY)
+router.post("/add/:id", (req, res) => {
+    const id = req.params.id;
+
     if (!req.session.cart) req.session.cart = [];
-    req.session.cart.push(productId);
+    req.session.cart.push(id);
+
     res.redirect("/cart");
 });
 
 // Remove item from cart
-router.get("/remove/:id", (req, res) => {
-    const productId = req.params.id;
+router.post("/remove/:id", (req, res) => {
+    const id = req.params.id;
+
     if (!req.session.cart) req.session.cart = [];
-    const index = req.session.cart.indexOf(productId);
+    const index = req.session.cart.indexOf(id);
     if (index !== -1) req.session.cart.splice(index, 1);
+
     res.redirect("/cart");
 });
 
@@ -28,8 +43,7 @@ router.get("/", (req, res) => {
         return res.send(`
             <h1>Your Cart</h1>
             <p>No items yet.</p>
-            <a href="/products">Back to products</a><br>
-            <a href="/">Back to home</a>
+            <a href="/products">Back to products</a>
         `);
     }
 
@@ -38,7 +52,7 @@ router.get("/", (req, res) => {
     db.all(`SELECT * FROM products WHERE id IN (${placeholders})`, cart, (err, items) => {
         if (err) return res.send("Database error");
 
-        const total = items.reduce((sum, i) => sum + i.price, 0);
+        const total = items.reduce((s, i) => s + i.price, 0);
 
         res.send(`
             <h1>Your Cart</h1>
@@ -46,87 +60,56 @@ router.get("/", (req, res) => {
                 ${items.map(i => `
                     <li>
                         ${escapeHtml(i.name)} — €${i.price.toFixed(2)}
-                        <a href="/cart/remove/${i.id}" style="color:red;">[Remove]</a>
+                        <form method="POST" action="/cart/remove/${i.id}" style="display:inline;">
+                            <input type="hidden" name="_csrf" value="${res.locals.csrfToken}">
+                            <button type="submit" style="color:red;">Remove</button>
+                        </form>
                     </li>
                 `).join("")}
             </ul>
 
             <h3>Total: €${total.toFixed(2)}</h3>
 
-            <form action="/cart/pay" method="POST">
+            <form method="POST" action="/cart/pay">
                 <input type="hidden" name="_csrf" value="${res.locals.csrfToken}">
-                <label>Card Number (Fake):</label><br>
-                <input name="card" placeholder="1234 5678 9012 3456" required><br><br>
+                <input name="card" placeholder="1234 5678 9012 3456" required>
                 <button type="submit">Pay Now</button>
             </form>
 
-            <br>
-            <a href="/products">Back to products</a><br>
-            <a href="/">Back to home</a>
+            <a href="/products">Continue Shopping</a>
         `);
     });
 });
 
-// Escape helper to prevent XSS in cart item names
-function escapeHtml(text) {
-    return text.replace(/[&<>"']/g, function (m) {
-        switch (m) {
-            case "&": return "&amp;";
-            case "<": return "&lt;";
-            case ">": return "&gt;";
-            case '"': return "&quot;";
-            case "'": return "&#39;";
-            default: return m;
-        }
-    });
-}
-
-// Fake payment → creates order (mask card number)
-// Fake payment → creates order (mask card number + store total)
+// Payment
 router.post("/pay", (req, res) => {
     const cart = req.session.cart || [];
-    let cardRaw = req.body.card || "NO CARD ENTERED";
+    if (cart.length === 0) return res.status(400).send("Cart is empty");
 
-    if (cart.length === 0) {
-        return res.send("<p>Your cart is empty!</p>");
-    }
-
-    // Recalculate total from cart (never trust client-side values)
     const placeholders = cart.map(() => "?").join(",");
+
     db.all(`SELECT * FROM products WHERE id IN (${placeholders})`, cart, (err, items) => {
-        if (err) return res.send("Database error during payment.");
+        if (err) return res.send("Database error");
 
-        const total = items.reduce((sum, i) => sum + i.price, 0);
+        const total = items.reduce((s, i) => s + i.price, 0);
 
-        // Mask card number for storage
-        let cardNumber = cardRaw.replace(/\D/g, ''); // remove non-digits
-        if (cardNumber.length >= 4) {
-            cardNumber = "**** **** **** " + cardNumber.slice(-4);
-        } else {
-            cardNumber = "**** **** **** ****";
-        }
+        let card = req.body.card.replace(/\D/g, "");
+        if (card.length >= 4) card = "**** **** **** " + card.slice(-4);
 
-        db.run(
-            "INSERT INTO orders (card_number, total) VALUES (?, ?)",
-            [cardNumber, total],
-            function (err) {
-                if (err) return res.send("Error creating order.");
-
-                req.session.cart = []; // clear cart
+        db.run("INSERT INTO orders (card_number, total) VALUES (?, ?)",
+            [card, total],
+            function () {
+                req.session.cart = [];
 
                 res.send(`
                     <h1>Order Successful</h1>
-                    <p>Your fake payment has been processed.</p>
-                    <p><strong>Order ID:</strong> ${this.lastID}</p>
-                    <p><strong>Total Paid:</strong> €${total.toFixed(2)}</p>
-
-                    <a href="/products">Continue Shopping</a><br>
-                    <a href="/">Back to home</a>
+                    <p>Order ID: ${this.lastID}</p>
+                    <p>Total Paid: €${total.toFixed(2)}</p>
+                    <a href="/products">Back to Products</a>
                 `);
             }
         );
     });
 });
-
 
 module.exports = router;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title><%= product.name %></title>
 </head>
 <body>
@@ -9,17 +9,23 @@
     <p>Price: €<%= product.price %></p>
     <p>Stock: <%= product.stock %></p>
 
-    <a href="/cart/add/<%= product.id %>">Add to Cart</a><br><br>
+    <!-- SECURE Add to Cart -->
+    <form method="POST" action="/cart/add/<%= product.id %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit">Add to Cart</button>
+    </form>
 
-    <a href="/products">Back to Products</a> | <a href="/">Home</a>
+    <a href="/products">Back</a>
+    <a href="/">Home</a>
 
     <h3>Reviews</h3>
     <ul>
         <% reviews.forEach(r => { %>
-            <li><%= r.content %></li> <!-- safe escaped output -->
+            <li><%= r.content %></li>
         <% }) %>
     </ul>
 
+    <!-- Review Form (Sanitized + CSRF) -->
     <form method="POST" action="/products/<%= product.id %>/review">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <textarea name="content" required></textarea><br>

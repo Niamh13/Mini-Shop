@@ -4,53 +4,65 @@ const sqlite3 = require("sqlite3").verbose();
 const db = new sqlite3.Database("./db/database.sqlite");
 const sanitizeHtml = require("sanitize-html");
 
-// List products with safe parameterized LIKE query
+// ------------------------------
+// LIST PRODUCTS (sanitised, parameterised)
+// ------------------------------
 router.get("/", (req, res) => {
     const search = req.query.search || "";
+
     const sql = "SELECT * FROM products WHERE name LIKE ?";
     db.all(sql, [`%${search}%`], (err, products) => {
         if (err) return res.send("Database error");
 
         const noProducts = products.length === 0;
-        res.render("products", { products, encodeURIComponent, search, noProducts });
+
+        res.render("products", {
+            products,
+            search,
+            noProducts,
+            encodeURIComponent,
+            csrfToken: req.csrfToken()
+        });
     });
 });
 
-// Product detail page with reviews (sanitized)
+// ------------------------------
+// PRODUCT DETAIL PAGE
+// ------------------------------
 router.get("/:id", (req, res) => {
-    const productId = req.params.id;
-    db.get("SELECT * FROM products WHERE id = ?", [productId], (err, product) => {
+    const id = req.params.id;
+
+    db.get("SELECT * FROM products WHERE id = ?", [id], (err, product) => {
         if (err) return res.send("Database error");
         if (!product) return res.status(404).send("Product not found");
 
-        db.all("SELECT * FROM reviews WHERE product_id = ?", [productId], (err2, reviews) => {
+        db.all("SELECT * FROM reviews WHERE product_id = ?", [id], (err2, reviews) => {
             if (err2) return res.send("Database error");
 
             res.render("product_detail", {
                 product,
-                reviews: reviews || []
+                reviews: reviews || [],
+                csrfToken: req.csrfToken()
             });
         });
     });
 });
 
-// Add a review (sanitize input, use CSRF protection)
+// ------------------------------
+// POST REVIEW (SANITIZED)
+// ------------------------------
 router.post("/:id/review", (req, res) => {
-    const productId = req.params.id;
-    // Sanitize user input to prevent stored XSS
-    const contentRaw = req.body.content || "";
-    const content = sanitizeHtml(contentRaw, {
-        allowedTags: [], // strip all tags
+    const id = req.params.id;
+
+    const contentSanitized = sanitizeHtml(req.body.content || "", {
+        allowedTags: [],
         allowedAttributes: {}
     });
 
     db.run(
         "INSERT INTO reviews (product_id, content) VALUES (?, ?)",
-        [productId, content],
-        (err) => {
-            if (err) console.error(err);
-            res.redirect(`/products/${productId}`);
-        }
+        [id, contentSanitized],
+        () => res.redirect(`/products/${id}`)
     );
 });
 
