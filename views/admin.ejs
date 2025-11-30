@@ -16,8 +16,7 @@
 
         <% orders.forEach(o => { %>
         <tr> 
-            <td><% o.id %></td>
-            <td><% o.card_number %></td>
+            <p>Order #<%= o.id %> - Card: <%= o.card_number %></p>
         </tr>
         <% }) %>
     </table>

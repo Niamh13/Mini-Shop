@@ -8,8 +8,8 @@
 <body>
     <h1>Products</h1>
 
-    <form method="GET" action="products">
-        <input type="text" name="search" value="<%= search %>">
+    <form method="GET" action="/products">
+        <input type="text" name="search" value="<%= search %>" />
         <button type="submit">Search</button>
     </form>
 
@@ -21,13 +21,13 @@
     <!-- List products -->
     <ul>
         <% products.forEach(p => { %>
-        <li>
+          <li>
             <%= p.name %> — €<%= p.price %> — Stock: <%= p.stock %>
             <a href="/cart/add/<%= p.id %>">Add to cart</a>
-            <a href="/products/<%= p.id %>">View</a>"
-        </li>
-    <% }) %>
-    </ul>
+            <a href="/products/<%= p.id %>">View</a>
+          </li>
+        <% }) %>
+      </ul>
     <% } %>
     <br>
     <hr>
