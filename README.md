@@ -87,11 +87,17 @@ npm install bcrypt
 
  **3. Initialise SQLite db**
 node db/init.js
-node db/logs.js
+node db/logs.js (only for secure)
 
  **4. Run**
 node app.js
 http://localhost:3000
+
+**5. Run Playwright test**
+- on the first terminal
+node app.js
+- on a second terminal
+npx playwright test tests
 
 **Admin Login**
 Default set as
