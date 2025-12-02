@@ -2,6 +2,8 @@ const sqlite3 = require("sqlite3").verbose();
 const db = new sqlite3.Database("./db/database.sqlite");
 
 db.serialize(() => {
+
+    // create product table
     db.run(`
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -11,6 +13,7 @@ db.serialize(() => {
         )
     `);
 
+    // create review table
     db.run(`
         CREATE TABLE IF NOT EXISTS reviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -19,6 +22,7 @@ db.serialize(() => {
         )
     `);
 
+    // create orders table
     db.run(`
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,12 +31,12 @@ db.serialize(() => {
         )
     `);
 
-    // fake products
+    // fake products input
     db.run(`INSERT INTO products (name, price) VALUES ('Red Double Knit Yarn', 8.99)`);
     db.run(`INSERT INTO products (name, price) VALUES ('Blue Double Knit Yarn', 9.99)`);
     db.run(`INSERT INTO products (name, price) VALUES ('Black Double Knit Yarn', 9.49)`);
 
-    // fake orders
+    // fake orders input
     db.run(`INSERT INTO orders (card_number, total) VALUES ('4242 4242 4242 4242', 31.47)`);
     db.run(`INSERT INTO orders (card_number, total) VALUES ('5555 5555 5555 4444', 19.48)`);
     db.run(`INSERT INTO orders (card_number, total) VALUES ('3714 496353 98431', 50.45)`);

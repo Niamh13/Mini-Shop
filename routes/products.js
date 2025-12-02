@@ -4,7 +4,7 @@ const sqlite3 = require("sqlite3").verbose();
 const db = new sqlite3.Database("./db/database.sqlite");
 const sanitizeHtml = require("sanitize-html");
 
-// LIST PRODUCTS (sanitised, parameterised)
+// products list (sanitised, parameterised)
 router.get("/", (req, res) => {
     const rawSearch = req.query.search || "";
 
@@ -29,7 +29,7 @@ router.get("/", (req, res) => {
     });
 });
 
-// PRODUCT DETAIL PAGE
+// each products detail page load
 router.get("/:id", (req, res) => {
     const id = req.params.id;
 
@@ -49,7 +49,7 @@ router.get("/:id", (req, res) => {
     });
 });
 
-// POST REVIEW (SANITIZED)
+// add review (sanitised)
 router.post("/:id/review", (req, res) => {
     const id = req.params.id;
 

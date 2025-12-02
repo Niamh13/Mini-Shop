@@ -1,14 +1,17 @@
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./db/database.sqlite');
 
-// Create tables including admins
+// inital tables including admins and logs
 db.serialize(() => {
+
+  // create admins table
   db.run(`CREATE TABLE IF NOT EXISTS admins (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
     password_hash TEXT
   )`);
 
+  // create logs table
   db.run(`CREATE TABLE IF NOT EXISTS logs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
         message TEXT,
@@ -16,6 +19,7 @@ db.serialize(() => {
     )`);
 
   // Insert default admin if not exists (username: admin, password: admin123)
+  // uses bcrypt to hash the password
   const bcrypt = require('bcrypt');
   const defaultUsername = 'admin';
   const defaultPassword = 'admin123';
@@ -29,8 +33,6 @@ db.serialize(() => {
       });
     }
   });
-
-  // ... other table setups for products, orders, reviews, logs
 });
 
 module.exports = db;

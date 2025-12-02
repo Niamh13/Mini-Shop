@@ -10,55 +10,84 @@ const csurf = require("csurf");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Security middlewares
+// security middlewares
 app.use(helmet());
 
-// Body parsers & cookies
+app.use((req, res, next) => {
+  res.removeHeader("Content-Security-Policy");
+  res.removeHeader("X-Content-Security-Policy");
+  res.removeHeader("X-WebKit-CSP");
+  next();
+});
+
+
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      formAction: ["'self'"],
+      baseUri: ["'self'"],
+      frameAncestors: ["'none'"]
+    }
+  })
+);
+
+
+// body parsers & cookies
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-// Session config - for demo keep secure:false on localhost; set secure:true in HTTPS
+// session config
 app.use(session({
   secret: process.env.SESSION_SECRET || "change_this_in_production",
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false,       // set true if using HTTPS
-    sameSite: 'lax'      // helps mitigate CSRF
+    secure: false,       
+    sameSite: 'lax'      
   }
 }));
 
-// CSRF protection - exclude /admin/login POST so we can handle login form safely
+// CSRF protection
 const csrfProtection = csurf();
 
 app.use((req, res, next) => {
-  // Exclude POST /admin/login from CSRF protection to avoid token errors while submitting login form
+  // exclude POST /admin/login from CSRF protection to avoid token errors while submitting login form
   if (req.path === "/admin/login" && req.method === "POST") {
-    next();
-  } else {
-    csrfProtection(req, res, next);
-  }
+    return next();
+  } 
+  csrfProtection(req, res, next);
 });
 
-// Static files
+app.use((req, res, next) => {
+  if (req.path === "/admin/login" && req.method === "POST") return next();
+  if (req.csrfToken) res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
+// static files
 app.use(express.static("public"));
 
-// View engine
+// view engine
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// Minimal, safe logging middleware (no request body logging)
+// minimal, safe logging middleware (no request body logging)
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
-// Helper: escaping function (available in templates)
+// escaping function
 app.locals.escapeHTML = (str) => {
   if (!str) return '';
-  return String(str).replace(/[&<>"']/g, (m) => ({
+  return String(str).replace(/[&<>"']/g, m => ({
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
@@ -67,26 +96,17 @@ app.locals.escapeHTML = (str) => {
   }[m]));
 };
 
-// Make CSRF token available to all views (except excluded routes)
-app.use((req, res, next) => {
-  if (req.path === "/admin/login" && req.method === "POST") {
-    // no CSRF token here
-    return next();
-  }
-  res.locals.csrfToken = req.csrfToken();
-  next();
-});
-
-// Mount routes
+// mount routes
 app.use("/products", require("./routes/products"));
 app.use("/admin", require("./routes/admin"));
 app.use("/cart", require("./routes/cart"));
 
-// Home page route rendering views/home.ejs
+// home page route rendering views/home.ejs
 app.get("/", (req, res) => {
   res.render("home");
 });
 
+// start server
 app.listen(PORT, () => {
   console.log(`Mini-Shop (secure) running at http://localhost:${PORT}`);
 });

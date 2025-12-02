@@ -20,13 +20,13 @@
                 <li>
                     <strong><%= p.name %></strong> — €<%= p.price %>
 
-                    <!-- SECURE add-to-cart POST -->
+                    <!-- add-to-cart POST -->
                     <form method="POST" action="/cart/add/<%= p.id %>" style="display:inline;">
                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <button type="submit">Add to cart</button>
                     </form>
 
-                    <a href="/products/<%= p.id %>">View</a>
+                    <button><a href="/products/<%= p.id %>">View</a></button>
                 </li>
             <% }) %>
         </ul>

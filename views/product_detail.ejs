@@ -9,7 +9,7 @@
     <p>Price: €<%= product.price %></p>
     <p>Stock: <%= product.stock %></p>
 
-    <!-- SECURE Add to Cart -->
+    <!-- add to Cart -->
     <form method="POST" action="/cart/add/<%= product.id %>">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit">Add to Cart</button>
@@ -25,7 +25,7 @@
         <% }) %>
     </ul>
 
-    <!-- Review Form (Sanitized + CSRF) -->
+    <!-- review form (Sanitised + CSRF) -->
     <form method="POST" action="/products/<%= product.id %>/review">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <textarea name="content" required></textarea><br>

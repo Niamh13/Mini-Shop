@@ -10,6 +10,7 @@
 
     <h2>Add New Product</h2>
 
+    <!--Product form for adding-->
     <form method="POST" action="/admin/products/new">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <label>Name:</label><br>
@@ -27,6 +28,8 @@
     <hr>
 
     <h2>Existing Products</h2>
+
+    <!--Product list for editting-->
     <ul>
         <% products.forEach(p => { %>
         <li>
@@ -58,8 +61,11 @@
     <hr>
 
     <h2>Orders</h2>
+
     <table border="1">
         <tr><th>ID</th><th>Card</th><th>Total</th></tr>
+
+        <!--Order table-->
         <% orders.forEach(o => { %>
         <tr>
             <td><%= o.id %></td>
@@ -67,6 +73,7 @@
             <td>€<%= o.total %></td>
         </tr>
         <% }) %>
+
     </table>
 
     <hr>

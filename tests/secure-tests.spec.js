@@ -2,44 +2,39 @@ import { test, expect } from "@playwright/test";
 
 const BASE = "http://localhost:3000";
 
-//
-// HOMEPAGE
-//
+
+// hoem page loads
 test("Home page loads", async ({ page }) => {
   await page.goto(BASE, { waitUntil: "load" });
   await expect(page.locator("a[href='/products']")).toBeVisible();
 });
 
-//
-// ADD TO CART (WebKit-safe)
-//
+// add to cart
 test("User can add product to cart", async ({ page }) => {
   await page.goto(`${BASE}/products`, { waitUntil: "load" });
 
-  // Must wait for redirect so WebKit stores cookie
+  // wait for redirect
   await Promise.all([
     page.waitForNavigation({ waitUntil: "load" }),
     page.locator("text=Add to cart").first().click()
   ]);
 
-  // Now visit cart page
+  // visit cart
   await page.goto(`${BASE}/cart`, { waitUntil: "load" });
 
-  // Should contain at least one <li>
+  // should contain at least one <li>
   await expect(page.locator("ul li").first()).toBeVisible();
 });
 
-//
-// XSS BLOCKING (WebKit-safe)
-//
+// XSS blocking - sanitization (stored)
 test("Secure: Stored XSS is sanitized", async ({ page }) => {
   await page.goto(`${BASE}/products`, { waitUntil: "load" });
   await page.locator("text=View").first().click();
 
-  // Ensure form is present
+  // form is present
   await expect(page.locator("textarea[name='content']")).toBeVisible();
 
-  // Submit sanitized review
+  // submit sanitized review
   await Promise.all([
     page.waitForNavigation({ waitUntil: "load" }),
     page.fill("textarea[name='content']", "<script>alert(1)</script>").then(() =>
@@ -53,9 +48,7 @@ test("Secure: Stored XSS is sanitized", async ({ page }) => {
   expect(text).not.toContain("alert");
 });
 
-//
-// SQL Injection BLOCKED
-//
+// SQL Injection blocking
 test("Secure: SQL Injection does NOT expose all products", async ({ page }) => {
   await page.goto(`${BASE}/products?search=%25' OR '1'='1`, {
     waitUntil: "load"
@@ -65,9 +58,7 @@ test("Secure: SQL Injection does NOT expose all products", async ({ page }) => {
   expect(count).toBeLessThan(5);
 });
 
-//
-// ADMIN LOGIN REQUIRED
-//
+// admin login is required to access panel
 test("Secure: Admin cannot access panel without login", async ({ page }) => {
   const response = await page.goto(`${BASE}/admin`, {
     waitUntil: "load"
@@ -77,17 +68,15 @@ test("Secure: Admin cannot access panel without login", async ({ page }) => {
   expect(response.status()).toBe(403);
 });
 
-//
-// ADMIN LOGIN (WebKit-safe)
-//
+// admin can login
 test("Secure: Admin can login", async ({ page }) => {
-  // Visit login with load so CSRF & cookie load
+  // visit login with load (CSRF & cookie load)
   await page.goto(`${BASE}/admin/login`, { waitUntil: "load" });
 
   await page.fill("input[name='username']", "admin");
   await page.fill("input[name='password']", "admin123");
 
-  // Login submit — MUST wait for redirect so WebKit stores session
+  // login submit
   await Promise.all([
     page.waitForNavigation({ waitUntil: "load" }),
     page.click("button[type=submit]")
@@ -96,9 +85,7 @@ test("Secure: Admin can login", async ({ page }) => {
   await expect(page.locator("h1")).toHaveText("Admin Panel");
 });
 
-//
-// CSRF PROTECTION
-//
+// CSRF protection on payment
 test("Secure: Payment requires CSRF token", async ({ request }) => {
   const response = await request.post(`${BASE}/cart/pay`, {
     form: { card: "1234123412341234" }
@@ -107,9 +94,7 @@ test("Secure: Payment requires CSRF token", async ({ request }) => {
   expect(response.status()).toBe(403);
 });
 
-//
-// SECURITY HEADERS VIA HELMET
-//
+// Security headers present (helmet)
 test("Secure: Security headers present", async ({ page }) => {
   const response = await page.goto(`${BASE}`, { waitUntil: "load" });
   const headers = response.headers();

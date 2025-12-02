@@ -3,7 +3,7 @@ const sqlite3 = require("sqlite3").verbose();
 const router = express.Router();
 const db = new sqlite3.Database("./db/database.sqlite");
 
-// Secure HTML escape
+// secure HTML escape
 function escapeHtml(text) {
     return text.replace(/[&<>"']/g, m => ({
         "&": "&amp;",
@@ -14,7 +14,7 @@ function escapeHtml(text) {
     }[m]));
 }
 
-// Add item to cart (POST ONLY)
+// add item to cart (POST ONLY)
 router.post("/add/:id", (req, res) => {
     const id = req.params.id;
 
@@ -24,7 +24,7 @@ router.post("/add/:id", (req, res) => {
     res.redirect("/cart");
 });
 
-// Remove item from cart
+// remove item from cart
 router.post("/remove/:id", (req, res) => {
     const id = req.params.id;
 
@@ -35,7 +35,7 @@ router.post("/remove/:id", (req, res) => {
     res.redirect("/cart");
 });
 
-// View cart
+// view cart
 router.get("/", (req, res) => {
     const cart = req.session.cart || [];
 
@@ -81,7 +81,7 @@ router.get("/", (req, res) => {
     });
 });
 
-// Payment
+// payment function
 router.post("/pay", (req, res) => {
     const cart = req.session.cart || [];
     if (cart.length === 0) return res.status(400).send("Cart is empty");
