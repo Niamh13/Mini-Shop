@@ -1,4 +1,4 @@
-# Mini-Shop (Secure Applicant Programming Project)
+# Mini-Shop (Secure Application Programming Project)
 
 Mini-Shop purpose is to demostrate insecure coding practices, analyse their security impact, and implement secure remediation following industry standards such as the OWASP Top 10.
 
@@ -15,7 +15,7 @@ The application is minimal to focus on security control rather than design or fu
 - Admin panel
 - Product management (add/update/delete)
 - Order records with masked card numbers
-- System activity loggin
+- System activity logging
 - Simple user review system  
 
 # **Insecure Version Includes (Intentionally Introduced)**
